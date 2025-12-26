@@ -1,11 +1,43 @@
 from fastapi import FastAPI,Query
 from fastapi import HTTPException
+from pydantic import BaseModel,Field
 
 import random
 from typing import Annotated
 
 app = FastAPI()
 
+items_db = []
+
+# Pydantic  Request Model
+class Item(BaseModel):
+    name:str = Field(
+        min_length = 1,
+        max_length = 100,
+        description="The Item Name"
+    )
+    
+# Pydantic Response Model
+
+class ItemResponse(BaseModel):
+    status:bool
+    message:str
+    item:str
+    
+class ItemUpdateResponse(BaseModel):
+    message:str
+    old_item:str
+    new_item:str
+    
+class ItemDeletedResponse(BaseModel):
+    message:str
+    deleted_item:str
+    items_remaining:int
+    
+class ItemListResponse(BaseModel):
+    original_order: list[str]
+    randomized_order:list[str]
+    count:int
 @app.get("/")
 
 def welcome_home():
@@ -48,59 +80,51 @@ def random_number_between(
     
     return data
     
-items_db = []
-@app.post("/items")
-def add_item(body:dict):
-    name = body.get("name")
+@app.post("/items",response_model=ItemResponse)
+def add_item(item:Item):
+        
+    if item.name in items_db:
+        raise HTTPException(status_code=400,detail="Item already added into list!",status=False)
     
-    if not name:
-        raise HTTPException(status_code=400,detail="Item name can not be empty")
+    items_db.append(item.name)
     
-    if name in items_db:
-        raise HTTPException(status_code=400,detail="Item already added into list!")
-    
-    items_db.append(name)
-    
-    return {"message":"Item added successfully!","item_name":name}
+    return ItemResponse(status=True,message="Item added successfully!",item=item.name)
 
-@app.get("/items")
+@app.get("/items",response_model=ItemListResponse)
 
 def get_randomized_items():
     randomized = items_db.copy()
     random.shuffle(randomized)
     
-    return {
-        "oridinal_list":items_db,
-        "shuffled_item_list":randomized,
-        "count":len(items_db)
-    }
+    return ItemListResponse(
+        original_order=items_db,
+        randomized_order=randomized,
+        count=len(randomized)
+        
+    )
     
     
-@app.put("/items/{updated_name}")
+@app.put("/items/{updated_name}",response_model=ItemUpdateResponse)
 
-def update_item(updated_name:str,body:dict):
-    new_item_name = body.get("new_item_name")
-    
-    if not new_item_name:
-        raise HTTPException(status_code=400,detail="New item name could not be empty!")
-    
-    if new_item_name in items_db:
-        raise HTTPException(status_code=400,detail="New item name already in the list!")
-    
+def update_item(updated_name:str,item:Item):
+     
     if updated_name not in items_db:
-        raise HTTPException(status_code=404,detail="ITEM NOT FOUND!")
+        raise HTTPException(status_code=400,detail="ITEM NOT FOUND!")
+    
+    if item.name in items_db:
+        raise HTTPException(status_code=409,detail="This name item already in the items list!")
     
     index = items_db.index(updated_name)
-    items_db[index] = new_item_name
+    items_db[index] = item.name
     
-    return {
-        "message":"Item updated successfully!",
-        "old_item":updated_name,
-        "new_name":new_item_name
-    }
+    return ItemUpdateResponse(
+        message="Item updated successfully!",
+        old_item=updated_name,
+        new_item=item.name
+    )
     
     
-@app.delete("/items/{item}")
+@app.delete("/items/{item}",response_model=ItemDeletedResponse)
 
 def delete_item(item:str):
     if item not in items_db:
@@ -108,8 +132,8 @@ def delete_item(item:str):
     
     items_db.remove(item)
     
-    return {
-        "message" : "Item removed successfully!",
-        "deleted_item":item,
-        "remaining_items_count":len(items_db)
-    }
+    return ItemDeletedResponse(
+        message="Item deleted successfully!",
+        deleted_item=item,
+        items_remaining=len(items_db)
+    )
