@@ -1,11 +1,20 @@
 from fastapi import FastAPI,Query
 from fastapi import HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel,Field
 
 import random
 from typing import Annotated
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "https://example.com"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
+
 
 items_db = []
 
@@ -40,13 +49,13 @@ class ItemListResponse(BaseModel):
     count:int
 @app.get("/")
 
-def welcome_home():
+async def welcome_home():
     return {"msg":"WELCOME TO THE RANDOMIZER API!"}
 
 
 @app.get("/random/{max_value}")
 
-def get_random_number(max_value : int):
+async def get_random_number(max_value : int):
     return {
         "max":max_value,
         "random_number":random.randint(1,max_value)
