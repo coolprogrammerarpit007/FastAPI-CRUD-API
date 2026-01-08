@@ -54,7 +54,7 @@ d.append(2)
 # print("Itertools in python")
 
 
-from itertools import product,permutations
+from itertools import product,permutations,combinations,accumulate
 
 a = [1,2,3]
 b = [3,4]
@@ -63,5 +63,5 @@ prod = list(product(a,b)) # will give cartesian cross product of matrix
 # print(prod)
 
 perm = permutations(a) # will give all possible combinations
-
-print(list(perm))
+comb = combinations(a) # will give all possible combinations
+# print(list(perm))
