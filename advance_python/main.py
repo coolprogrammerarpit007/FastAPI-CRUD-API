@@ -46,4 +46,22 @@ ordered_dict["e"] = 5
 d = deque()
 d.append(1)
 d.append(2)
-print(d)
+# print(d)
+
+
+#  Itertools in python
+# itertools:- product,permutations,combinations,accumulate,groupby,and infinite operators
+# print("Itertools in python")
+
+
+from itertools import product,permutations
+
+a = [1,2,3]
+b = [3,4]
+
+prod = list(product(a,b)) # will give cartesian cross product of matrix
+# print(prod)
+
+perm = permutations(a) # will give all possible combinations
+
+print(list(perm))
